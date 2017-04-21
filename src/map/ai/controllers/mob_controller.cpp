@@ -110,7 +110,7 @@ bool CMobController::CheckHide(CBattleEntity* PTarget)
 
 bool CMobController::CheckDetection(CBattleEntity* PTarget)
 {
-    if (CanDetectTarget(PTarget) || CanPursueTarget(PTarget) || 
+    if (CanDetectTarget(PTarget) || CanPursueTarget(PTarget) ||
         PMob->StatusEffectContainer->HasStatusEffect({EFFECT_BIND, EFFECT_SLEEP, EFFECT_SLEEP_II, EFFECT_LULLABY}))
     {
         TapDeaggroTime();
@@ -195,7 +195,7 @@ bool CMobController::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
     }
 
     auto detects = PMob->m_Detects;
-    auto currentDistance = distance(PTarget->loc.p, PMob->loc.p) + PTarget->getMod(MOD_STEALTH);
+    auto currentDistance = distance(PTarget->loc.p, PMob->loc.p) + PTarget->getMod(Mod::STEALTH);
 
     bool detectSight = (detects & DETECT_SIGHT) || forceSight;
     bool hasInvisible = false;
@@ -409,7 +409,7 @@ bool CMobController::TryCastSpell()
 bool CMobController::CanCastSpells()
 {
 
-    if (!PMob->SpellContainer->HasSpells())
+    if (!PMob->SpellContainer->HasSpells() && !PMob->m_HasSpellScript)
     {
         return false;
     }
@@ -758,6 +758,7 @@ void CMobController::DoRoamTick(time_point tick)
             }
             else
             {
+                // No longer including conditional for ROAMFLAG_AMBUSH now that using mixin to handle mob hiding
                 if (PMob->getMobMod(MOBMOD_SPECIAL_SKILL) != 0 &&
                     m_Tick >= m_LastSpecialTime + std::chrono::milliseconds(PMob->getBigMobMod(MOBMOD_SPECIAL_COOL)) &&
                     TrySpecialSkill())
@@ -774,16 +775,6 @@ void CMobController::DoRoamTick(time_point tick)
                 {
                     // cast buff
                     CastSpell(PMob->SpellContainer->GetBuffSpell());
-                }
-                else if ((PMob->m_roamFlags & ROAMFLAG_AMBUSH))
-                {
-                    //#TODO: #AIToScript move to scripts
-                    // stay underground
-                    PMob->HideName(true);
-                    PMob->HideModel(true);
-                    PMob->animationsub = 0;
-
-                    PMob->updatemask |= UPDATE_HP;
                 }
                 else if ((PMob->m_roamFlags & ROAMFLAG_STEALTH))
                 {
